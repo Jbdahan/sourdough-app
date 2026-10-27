@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sourdough">
+<meta name="theme-color" content="#f6f1e9">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<link rel="icon" href="icon-512.png">
+<title>Sourdough</title>
+<style>
+  :root {
+    --bg: #f6f1e9; --card: #fffdf9; --ink: #2b241c; --muted: #8a7d6d;
+    --line: #e6ddd0; --accent: #a8612b; --accent-ink: #fff; --field: #f3ece2;
+    --danger: #b23a2a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1b1814; --card: #25211c; --ink: #f1e9dd; --muted: #a39684;
+      --line: #3a342c; --accent: #e09a5c; --accent-ink: #1b1814; --field: #2f2a24;
+      --danger: #ff7a66;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 24px);
+  }
+  main { max-width: 560px; margin: 0 auto; padding: 0 16px; }
+  header { display: flex; align-items: center; gap: 8px; padding: 14px 0 10px; }
+  header select {
+    flex: 1; min-width: 0; font-family: inherit; font-size: 22px; font-weight: 600; color: var(--ink);
+    background: transparent; border: 0; padding: 4px 0; appearance: none; -webkit-appearance: none;
+  }
+  header .chev { color: var(--muted); pointer-events: none; margin-left: -28px; width: 20px; }
+  button {
+    font: inherit; border: 0; border-radius: 10px; padding: 8px 14px;
+    background: var(--field); color: var(--ink); cursor: pointer;
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  button.danger { color: var(--danger); }
+  button.icon { width: 40px; height: 40px; padding: 0; font-size: 22px; line-height: 40px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin: 0 0 14px; }
+  .card h2 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label.field { display: block; font-size: 13px; color: var(--muted); }
+  label.field span { display: block; margin-bottom: 4px; }
+  input, textarea, select.plain {
+    font: inherit; color: var(--ink); background: var(--field); border: 1px solid transparent;
+    border-radius: 10px; padding: 9px 10px; width: 100%; min-width: 0;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  input[type=number] { -moz-appearance: textfield; text-align: right; font-variant-numeric: tabular-nums; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper { display: flex; gap: 6px; }
+  .stepper input { text-align: center; }
+  .stats { display: flex; gap: 10px; margin-top: 12px; }
+  .stat { flex: 1; background: var(--field); border-radius: 10px; padding: 8px 10px; }
+  .stat b { display: block; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .stat small { color: var(--muted); font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 12px; color: var(--muted); font-weight: 500; text-align: right; padding: 0 0 6px; }
+  th:first-child { text-align: left; }
+  td { padding: 4px 0; vertical-align: middle; }
+  td.name { padding-right: 8px; }
+  td.name .sub { display: block; font-size: 12px; color: var(--muted); }
+  td.pct { width: 84px; padding-right: 6px; }
+  td.g { width: 96px; }
+  td.del { width: 36px; text-align: right; }
+  body.editing td.pct { width: 62px; padding-right: 4px; }
+  body.editing td.g { width: 72px; }
+  body.editing td.name { padding-right: 4px; }
+  body.editing td input, body.editing td select { padding: 8px 7px; }
+  .ty { flex: 1; min-width: 0; }
+  .hy { width: 56px !important; flex: none; }
+  tr.total td { border-top: 1px solid var(--line); padding-top: 8px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  tr.total td:first-child { text-align: left; }
+  .edit-only { display: none; }
+  body.editing .edit-only { display: revert; }
+  body.editing .view-only { display: none; }
+  .row { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .hint { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+  .steps { white-space: pre-wrap; margin: 0; }
+  textarea { min-height: 180px; resize: vertical; }
+  .version { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <select id="recipePick" aria-label="Recipe"></select><span class="chev">▾</span>
+    <button id="editBtn">Edit</button>
+  </header>
+
+  <section class="card">
+    <h2>Batch</h2>
+    <div class="grid">
+      <label class="field"><span>Loaves</span>
+        <div class="stepper">
+          <button class="icon" data-step="-1" aria-label="Fewer loaves">−</button>
+          <input id="loaves" type="number" inputmode="decimal" min="0">
+          <button class="icon" data-step="1" aria-label="More loaves">+</button>
+        </div>
+      </label>
+      <label class="field"><span>Dough per loaf (g)</span>
+        <input id="loafWeight" type="number" inputmode="decimal" min="0">
+      </label>
+      <label class="field"><span>Total flour (g)</span>
+        <input id="totalFlour" type="number" inputmode="decimal" min="0">
+      </label>
+      <label class="field"><span>Total dough (g)</span>
+        <input id="totalDough" type="number" inputmode="decimal" min="0">
+      </label>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>True hydration</small><b id="hydration">–</b></div>
+      <div class="stat"><small>Prefermented flour</small><b id="pff">–</b></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Ingredients</h2>
+    <table>
+      <thead><tr><th>Ingredient</th><th>Baker's %</th><th>Grams</th><th class="edit-only"></th></tr></thead>
+      <tbody id="ingBody"></tbody>
+    </table>
+    <p class="hint view-only">Change any number: grams rescale the whole batch, percentages change the formula.</p>
+    <div class="edit-only">
+      <div class="row"><button id="addIng">+ Add ingredient</button></div>
+      <p class="hint">Flours should add up to 100%. "Water" counts toward hydration. A levain is split into flour and water using its hydration.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Method</h2>
+    <p id="stepsView" class="steps view-only"></p>
+    <textarea id="stepsEdit" class="edit-only" placeholder="Steps, times, temperatures…"></textarea>
+  </section>
+
+  <section class="card edit-only">
+    <h2>Recipe</h2>
+    <label class="field"><span>Name</span><input id="recipeName" type="text"></label>
+    <div class="row">
+      <button id="dupRecipe">Duplicate</button>
+      <button id="newRecipe">New recipe</button>
+      <button id="delRecipe" class="danger">Delete</button>
+    </div>
+  </section>
+
+  <section class="card edit-only">
+    <h2>Backup</h2>
+    <p class="hint" style="margin-top:0">Recipes live on this phone. Export a copy now and then so you never lose them.</p>
+    <div class="row">
+      <button id="exportBtn">Export recipes</button>
+      <button id="importBtn">Import</button>
+      <input id="importFile" type="file" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <p class="version">v__VERSION__</p>
+</main>
+
+<script>
+const STORE = 'sourdough.v1';
+const TYPES = { flour: 'Flour', water: 'Water', levain: 'Levain', other: 'Other' };
+
+const SAMPLE = {
+  id: 'country',
+  name: 'Country Sourdough',
+  loaves: 2,
+  loafWeight: 900,
+  ingredients: [
+    { name: 'Bread flour', type: 'flour', pct: 90 },
+    { name: 'Whole wheat flour', type: 'flour', pct: 10 },
+    { name: 'Water', type: 'water', pct: 72 },
+    { name: 'Levain', type: 'levain', pct: 20, hydration: 100 },
+    { name: 'Salt', type: 'other', pct: 2 },
+  ],
+  steps: '1. Feed starter 1:5:5 the night before; use at peak.\n2. Autolyse flour + most of the water, 1 hr.\n3. Add levain, then salt with the remaining water.\n4. Bulk ferment ~4–5 hrs at 24°C, 4 sets of coil folds 30 min apart.\n5. Pre-shape, rest 30 min, final shape.\n6. Cold proof overnight in the fridge.\n7. Bake in a Dutch oven at 250°C: 20 min lid on, 20–25 min lid off.',
+};
+
+let state = load();
+let current = state.recipes.find(r => r.id === state.currentId) || state.recipes[0];
+
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(STORE));
+    if (s && Array.isArray(s.recipes) && s.recipes.length) return s;
+  } catch (e) {}
+  return { currentId: SAMPLE.id, recipes: [structuredClone(SAMPLE)] };
+}
+function save() {
+  state.currentId = current.id;
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+}
+
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isFinite(n) ? n : 0; };
+const totalPct = r => r.ingredients.reduce((s, i) => s + num(i.pct), 0);
+const dough = r => num(r.loaves) * num(r.loafWeight);
+const flourWeight = r => { const p = totalPct(r); return p ? dough(r) * 100 / p : 0; };
+const fmtG = g => g >= 100 ? Math.round(g) : g >= 10 ? Math.round(g * 2) / 2 : Math.round(g * 10) / 10;
+const fmtPct = p => Math.round(p * 10) / 10;
+
+// Set the batch so total dough = d, keeping the number of loaves.
+function setDough(d) {
+  const n = num(current.loaves) || 1;
+  if (!num(current.loaves)) current.loaves = 1;
+  current.loafWeight = d / n;
+}
+
+function analyse(r) {
+  const F = flourWeight(r);
+  let flour = 0, water = 0, pf = 0;
+  for (const i of r.ingredients) {
+    const g = F * num(i.pct) / 100;
+    if (i.type === 'flour') flour += g;
+    else if (i.type === 'water') water += g;
+    else if (i.type === 'levain') {
+      const h = num(i.hydration) / 100;
+      const lf = g / (1 + h);
+      flour += lf; water += g - lf; pf += lf;
+    }
+  }
+  return { hydration: flour ? water / flour * 100 : 0, pff: flour ? pf / flour * 100 : 0 };
+}
+
+const $ = id => document.getElementById(id);
+const editing = () => document.body.classList.contains('editing');
+
+function renderPicker() {
+  const pick = $('recipePick');
+  pick.innerHTML = '';
+  for (const r of state.recipes) pick.add(new Option(r.name || 'Untitled', r.id, false, r.id === current.id));
+}
+
+// Update every number except the field the user is typing in.
+function renderNumbers(skip) {
+  const F = flourWeight(current);
+  const set = (el, v) => { if (el !== skip) el.value = v; };
+  set($('loaves'), fmtPct(num(current.loaves)));
+  set($('loafWeight'), fmtG(num(current.loafWeight)));
+  set($('totalFlour'), fmtG(F));
+  set($('totalDough'), fmtG(dough(current)));
+  document.querySelectorAll('#ingBody tr[data-i]').forEach(tr => {
+    const ing = current.ingredients[tr.dataset.i];
+    set(tr.querySelector('.pct input'), fmtPct(num(ing.pct)));
+    set(tr.querySelector('.g input'), fmtG(F * num(ing.pct) / 100));
+    const sub = tr.querySelector('.sub');
+    if (sub && ing.type === 'levain') {
+      const g = F * num(ing.pct) / 100, h = num(ing.hydration) / 100, lf = g / (1 + h);
+      sub.textContent = `${fmtG(lf)} g flour + ${fmtG(g - lf)} g water`;
+    }
+  });
+  $('pctTotal').textContent = fmtPct(totalPct(current)) + '%';
+  $('gTotal').textContent = fmtG(dough(current));
+  const a = analyse(current);
+  $('hydration').textContent = fmtPct(a.hydration) + '%';
+  $('pff').textContent = fmtPct(a.pff) + '%';
+  const flourPct = current.ingredients.filter(i => i.type === 'flour').reduce((s, i) => s + num(i.pct), 0);
+  $('flourWarn').textContent = flourPct && Math.abs(flourPct - 100) > 0.05 ? `Flours add up to ${fmtPct(flourPct)}% (usually 100%)` : '';
+}
+
+function renderIngredients() {
+  const body = $('ingBody');
+  body.innerHTML = '';
+  current.ingredients.forEach((ing, i) => {
+    const tr = document.createElement('tr');
+    tr.dataset.i = i;
+    if (editing()) {
+      tr.innerHTML = `<td class="name">
+          <input class="nm" type="text" placeholder="Name">
+          <div class="row" style="margin-top:4px;flex-wrap:nowrap;gap:4px">
+            <select class="plain ty">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select>
+            <input class="hy" type="number" inputmode="decimal" placeholder="Hyd%" title="Levain hydration %" style="${ing.type === 'levain' ? '' : 'display:none'}">
+          </div></td>
+        <td class="pct"><input type="number" inputmode="decimal"></td>
+        <td class="g"><input type="number" inputmode="decimal"></td>
+        <td class="del"><button class="icon danger" aria-label="Remove">×</button></td>`;
+      tr.querySelector('.nm').value = ing.name;
+      tr.querySelector('.ty').value = ing.type;
+      tr.querySelector('.hy').value = ing.hydration ?? 100;
+    } else {
+      tr.innerHTML = `<td class="name"><span class="nm"></span>${ing.type === 'levain' ? '<span class="sub"></span>' : ''}</td>
+        <td class="pct"><input type="number" inputmode="decimal"></td>
+        <td class="g"><input type="number" inputmode="decimal"></td>`;
+      tr.querySelector('.nm').textContent = ing.name;
+    }
+    body.appendChild(tr);
+  });
+  const tot = document.createElement('tr');
+  tot.className = 'total';
+  tot.innerHTML = `<td>Total <span class="sub" id="flourWarn" style="color:var(--danger);font-weight:400"></span></td><td id="pctTotal"></td><td id="gTotal"></td><td class="edit-only"></td>`;
+  body.appendChild(tot);
+}
+
+function render() {
+  renderPicker();
+  renderIngredients();
+  $('stepsView').textContent = current.steps || 'No method yet. Tap Edit to add one.';
+  $('stepsEdit').value = current.steps || '';
+  $('recipeName').value = current.name;
+  $('editBtn').textContent = editing() ? 'Done' : 'Edit';
+  renderNumbers();
+}
+
+// Batch inputs
+$('loaves').addEventListener('input', e => { current.loaves = num(e.target.value); save(); renderNumbers(e.target); });
+$('loafWeight').addEventListener('input', e => { current.loafWeight = num(e.target.value); save(); renderNumbers(e.target); });
+$('totalDough').addEventListener('input', e => { setDough(num(e.target.value)); save(); renderNumbers(e.target); });
+$('totalFlour').addEventListener('input', e => { setDough(num(e.target.value) * totalPct(current) / 100); save(); renderNumbers(e.target); });
+document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', e => {
+  e.preventDefault();
+  current.loaves = Math.max(0, Math.round(num(current.loaves)) + num(b.dataset.step));
+  save(); renderNumbers();
+}));
+document.querySelectorAll('input[type=number]').forEach(el => el.addEventListener('blur', () => renderNumbers()));
+
+// Ingredient table
+$('ingBody').addEventListener('input', e => {
+  const tr = e.target.closest('tr[data-i]');
+  if (!tr) return;
+  const ing = current.ingredients[tr.dataset.i];
+  const cell = e.target.closest('td');
+  if (cell.classList.contains('pct')) {
+    ing.pct = num(e.target.value);
+  } else if (cell.classList.contains('g')) {
+    // Grams of one ingredient set the flour weight; the whole batch follows.
+    if (num(ing.pct)) setDough(num(e.target.value) * 100 / num(ing.pct) * totalPct(current) / 100);
+  } else if (e.target.classList.contains('nm')) {
+    ing.name = e.target.value;
+  } else if (e.target.classList.contains('hy')) {
+    ing.hydration = num(e.target.value);
+  }
+  save(); renderNumbers(e.target);
+});
+$('ingBody').addEventListener('change', e => {
+  if (!e.target.classList.contains('ty')) return;
+  const ing = current.ingredients[e.target.closest('tr').dataset.i];
+  ing.type = e.target.value;
+  if (ing.type === 'levain' && ing.hydration == null) ing.hydration = 100;
+  save(); renderIngredients(); renderNumbers();
+});
+$('ingBody').addEventListener('click', e => {
+  const b = e.target.closest('td.del button');
+  if (!b) return;
+  current.ingredients.splice(b.closest('tr').dataset.i, 1);
+  save(); renderIngredients(); renderNumbers();
+});
+document.addEventListener('focusin', e => { if (e.target.matches('input[type=number]')) e.target.select(); });
+
+$('addIng').addEventListener('click', () => {
+  current.ingredients.push({ name: '', type: 'other', pct: 0 });
+  save(); renderIngredients(); renderNumbers();
+  $('ingBody').querySelector(`tr[data-i="${current.ingredients.length - 1}"] .nm`).focus();
+});
+
+// Recipe management
+$('editBtn').addEventListener('click', () => { document.body.classList.toggle('editing'); render(); });
+$('recipePick').addEventListener('change', e => { current = state.recipes.find(r => r.id === e.target.value); save(); render(); });
+$('recipeName').addEventListener('input', e => { current.name = e.target.value; save(); renderPicker(); });
+$('stepsEdit').addEventListener('input', e => { current.steps = e.target.value; save(); });
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+$('dupRecipe').addEventListener('click', () => {
+  current = { ...structuredClone(current), id: newId(), name: current.name + ' (copy)' };
+  state.recipes.push(current); save(); render();
+});
+$('newRecipe').addEventListener('click', () => {
+  current = { id: newId(), name: 'New recipe', loaves: 1, loafWeight: 900, steps: '',
+    ingredients: [{ name: 'Bread flour', type: 'flour', pct: 100 }, { name: 'Water', type: 'water', pct: 70 },
+      { name: 'Levain', type: 'levain', pct: 20, hydration: 100 }, { name: 'Salt', type: 'other', pct: 2 }] };
+  state.recipes.push(current); save(); render();
+  $('recipeName').select();
+});
+$('delRecipe').addEventListener('click', () => {
+  if (!confirm(`Delete "${current.name}"?`)) return;
+  state.recipes = state.recipes.filter(r => r !== current);
+  if (!state.recipes.length) state.recipes.push(structuredClone(SAMPLE));
+  current = state.recipes[0]; save(); render();
+});
+
+// Backup
+$('exportBtn').addEventListener('click', async () => {
+  const json = JSON.stringify(state.recipes, null, 2);
+  const file = new File([json], 'sourdough-recipes.json', { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: 'Sourdough recipes' }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(file), download: file.name });
+  a.click(); URL.revokeObjectURL(a.href);
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const list = Array.isArray(data) ? data : data.recipes;
+    if (!Array.isArray(list) || !list.every(r => r && Array.isArray(r.ingredients))) throw new Error('Not a recipe file');
+    for (const r of list) {
+      const i = state.recipes.findIndex(x => x.id === r.id);
+      if (i >= 0) state.recipes[i] = r; else state.recipes.push({ ...r, id: r.id || newId() });
+    }
+    current = state.recipes.find(r => r.id === list[0].id) || current;
+    save(); render();
+    alert(`Imported ${list.length} recipe${list.length === 1 ? '' : 's'}.`);
+  } catch (err) { alert('Could not import: ' + err.message); }
+});
+
+render();
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
