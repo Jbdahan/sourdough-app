@@ -170,20 +170,38 @@
 const STORE = 'sourdough.v1';
 const TYPES = { flour: 'Flour', water: 'Water', levain: 'Levain', other: 'Other' };
 
-const SAMPLE = {
-  id: 'country',
-  name: 'Country Sourdough',
-  loaves: 2,
-  loafWeight: 900,
-  ingredients: [
-    { name: 'Bread flour', type: 'flour', pct: 90 },
-    { name: 'Whole wheat flour', type: 'flour', pct: 10 },
-    { name: 'Water', type: 'water', pct: 72 },
-    { name: 'Levain', type: 'levain', pct: 20, hydration: 100 },
-    { name: 'Salt', type: 'other', pct: 2 },
-  ],
-  steps: '1. Feed starter 1:5:5 the night before; use at peak.\n2. Autolyse flour + most of the water, 1 hr.\n3. Add levain, then salt with the remaining water.\n4. Bulk ferment ~4–5 hrs at 24°C, 4 sets of coil folds 30 min apart.\n5. Pre-shape, rest 30 min, final shape.\n6. Cold proof overnight in the fridge.\n7. Bake in a Dutch oven at 250°C: 20 min lid on, 20–25 min lid off.',
-};
+const DEFAULTS = [
+  {
+    id: 'base',
+    name: "Julian's Base Sourdough",
+    loaves: 6,
+    loafWeight: 800,
+    ingredients: [
+      { name: 'All-purpose flour', type: 'flour', pct: 90 },
+      { name: 'Whole wheat flour', type: 'flour', pct: 10 },
+      { name: 'Water', type: 'water', pct: 64 },
+      { name: 'Starter', type: 'levain', pct: 18, hydration: 100 },
+      { name: 'Salt', type: 'other', pct: 2 },
+    ],
+    steps: '1. Autolyse: mix the flours and water until combined, rest 2+ hours. (Can be shortened if needed, but then mix at least 5 minutes at the next step.)\n2. Add starter and salt.\n3. Bulk ferment, shape, proof, bake: add your steps here.',
+  },
+  {
+    id: 'sandwich',
+    name: 'Enriched Sandwich Loaf',
+    loaves: 2,
+    loafWeight: 1000,
+    ingredients: [
+      { name: 'Flour', type: 'flour', pct: 100 },
+      { name: 'Water (warm)', type: 'water', pct: 54 },
+      { name: 'Starter', type: 'levain', pct: 10, hydration: 100 },
+      { name: 'Butter', type: 'other', pct: 12 },
+      { name: 'Salt', type: 'other', pct: 2 },
+      { name: 'Sugar', type: 'other', pct: 2 },
+    ],
+    steps: 'For a 9.5 × 5.5" pan, 1000 g dough per loaf.\n\n1. In a stand mixer, cream the butter, sugar and salt with the flour.\n2. Add starter and warm water.\n3. Rest 30 minutes.\n4. Knead with the dough hook 6–8 minutes.\n5. Shape, proof, bake: add your steps here.',
+  },
+];
+const SAMPLE = DEFAULTS[0];
 
 let state = load();
 let current = state.recipes.find(r => r.id === state.currentId) || state.recipes[0];
@@ -193,7 +211,7 @@ function load() {
     const s = JSON.parse(localStorage.getItem(STORE));
     if (s && Array.isArray(s.recipes) && s.recipes.length) return s;
   } catch (e) {}
-  return { currentId: SAMPLE.id, recipes: [structuredClone(SAMPLE)] };
+  return { currentId: DEFAULTS[0].id, recipes: structuredClone(DEFAULTS) };
 }
 function save() {
   state.currentId = current.id;
