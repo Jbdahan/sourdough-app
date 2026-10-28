@@ -95,8 +95,19 @@
 <main>
   <header>
     <select id="recipePick" aria-label="Recipe"></select><span class="chev">▾</span>
+    <button id="addRecipe" class="icon" aria-label="New recipe">+</button>
     <button id="editBtn">Edit</button>
   </header>
+
+  <section class="card edit-only">
+    <h2>Recipe</h2>
+    <label class="field"><span>Name</span><input id="recipeName" type="text"></label>
+    <div class="row">
+      <button id="dupRecipe">Duplicate</button>
+      <button id="newRecipe">New recipe</button>
+      <button id="delRecipe" class="danger">Delete</button>
+    </div>
+  </section>
 
   <section class="card">
     <h2>Batch</h2>
@@ -143,15 +154,6 @@
     <textarea id="stepsEdit" class="edit-only" placeholder="Steps, times, temperatures…"></textarea>
   </section>
 
-  <section class="card edit-only">
-    <h2>Recipe</h2>
-    <label class="field"><span>Name</span><input id="recipeName" type="text"></label>
-    <div class="row">
-      <button id="dupRecipe">Duplicate</button>
-      <button id="newRecipe">New recipe</button>
-      <button id="delRecipe" class="danger">Delete</button>
-    </div>
-  </section>
 
   <section class="card edit-only">
     <h2>Backup</h2>
@@ -388,13 +390,18 @@ $('dupRecipe').addEventListener('click', () => {
   current = { ...structuredClone(current), id: newId(), name: current.name + ' (copy)' };
   state.recipes.push(current); save(); render();
 });
-$('newRecipe').addEventListener('click', () => {
+// A new recipe starts from a basic sourdough formula and opens in edit mode, name selected.
+function newRecipe() {
   current = { id: newId(), name: 'New recipe', loaves: 1, loafWeight: 900, steps: '',
     ingredients: [{ name: 'Bread flour', type: 'flour', pct: 100 }, { name: 'Water', type: 'water', pct: 70 },
-      { name: 'Levain', type: 'levain', pct: 20, hydration: 100 }, { name: 'Salt', type: 'other', pct: 2 }] };
-  state.recipes.push(current); save(); render();
+      { name: 'Starter', type: 'levain', pct: 20, hydration: 100 }, { name: 'Salt', type: 'other', pct: 2 }] };
+  state.recipes.push(current); save();
+  document.body.classList.add('editing'); render();
+  $('recipeName').scrollIntoView({ block: 'center' });
   $('recipeName').select();
-});
+}
+$('newRecipe').addEventListener('click', newRecipe);
+$('addRecipe').addEventListener('click', newRecipe);
 $('delRecipe').addEventListener('click', () => {
   if (!confirm(`Delete "${current.name}"?`)) return;
   state.recipes = state.recipes.filter(r => r !== current);
